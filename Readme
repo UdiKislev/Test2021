@@ -1,1 +1,41 @@
-This is a Test for the WPILIB Test2021
+The Feed Forward calculation and Calibration
+
+CalibrateTurn command - run the robot with specific left/right power for 2 seconds, then read the velocities
+Calibrate Command - run multiple CalibrateTurn commands and than analyze the data to calculate the KV/KS/HR/HL values
+
+Calculations for Stright driving - same velocity in left and right
+    The precent power is KV + KS * Velocity
+    KV is the precent voltage required to overcome all friction and ressistance - this is a constant value that is not affected by velocity
+    KS is the precent voltage that is required to overcome the generated voltage of the motor - this is linear with velocity
+    
+Calculatiobs for Turining with different required Velocity
+    Calculate the "base velocity" based on HR/HL
+      base Velocity = High Veocity + Low Velocity * (LR/(LH-LR))
+    Calculate outer (high velocity) Power
+      Outer Percent Power = KV + KS * base Velocity
+    Calculate the inner (low) Power
+      Inner Percent Power = Outer Power - (base Velocity - low Velocity) * LR
+
+Explanation:
+    Using the KV + KS*Velocity for left/right velocity give poor result as there are relation between left/right side
+    When setting power for Stright for velocity V (using the KV + KS*V formula) we maintain the V velocity on both sides
+    When lowering the power of one side - the result is that both side have lower Velocity - but the side with the low power is "losing"" more velocity
+    With many tests we figure that the "lose"velocity is linear with the reduce power, the outer velocity is losing velocity with HR ratio and the inner with the LR ratio
+    When the required velocities are Vh and Vl - we can calculate the "base Velocity" using the HR/HL :
+        base Velocity is Vh + X
+        X*HR = (Vh+X-Vl)*HL
+        X = Vh + Vl*LR/(HR-LR)
+    The outer power is the power to go stright with that velocity - KV + KS * base Velocity
+    The inner power is outer Power - (base Velocity-Vl) * LR
+    
+ Finding the parametrs:
+    Running the robot forward and back with known power:
+      0.4/0.4
+      0.4,0.1
+      0.3/0.3
+      0.3/0.1
+    We are getting the V44, V33, V41-HIGH v41-LOW and V31-HIGH V31-LOW
+    KS = (0.4-0.1)/(V44-V33)
+    KV = average of (0.4 - V44*KS), (0.3-V33*KS)
+    HR = average of (0.4 - 0.1)/(V44-V41-HIGH), (0.3-0.1)/(V33- V31-HIGH)
+    LR = average of (0.4 - 0.1)/(V44-V41-LOW), (0.3-0.1)/(V33- V31-LOW)
